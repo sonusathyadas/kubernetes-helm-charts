@@ -1,0 +1,12 @@
+replicaCount: 1
+
+image:
+  repository: sonusathyadas/sampleapp
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  name: greetingsapp-svc
+  type: LoadBalancer
+  port: 8080
+  internalPort: 5000

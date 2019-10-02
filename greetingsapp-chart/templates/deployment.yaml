@@ -1,0 +1,27 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata: 
+  name: {{ include "greetingsapp-chart.fullname" . }}
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+    managed-by: {{ .Release.ServiceName}}
+    instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{include "greetingsapp-chart.name" .}}
+      instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{include "greetingsapp-chart.name" .}}
+        instance: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag}}"
+        imagePullPolicy: {{ .Values.image.imagePullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.internalPort }}  
+          protocol : TCP 
