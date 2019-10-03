@@ -105,3 +105,150 @@ spec:
     app: {{include "greetingsapp-chart.name" .}}
     instance: {{ .Release.Name }}
 ```
+
+Your `values.yaml` file contains the default values:
+```
+replicaCount: 1
+
+image:
+  repository: sonusathyadas/sampleapp
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  name: greetingsapp-svc
+  type: LoadBalancer
+  port: 8080
+  internalPort: 5000
+```
+
+## Deploy applications using Helm charts
+You can create helm chart for your own containerized applications. Deploy the pods, services, persistent volume claims and secrets using a single command. Here, I am going to explain some helm commands that can be used to create and deploy applications using helm charts.
+
+### helm create 
+The `helm create ` command is used to create a helm chart project folder. The helm chart project contains the `templates` directory, `charts` directory, `Chart.yaml` file, `values.yaml` file, `.helmignore` file. You can also see a `_helpers.tpl` file inside the   `templates` directory that contains the helper methods for the template files. 
+```
+helm create greetingsapp-chart
+```
+You can update the template YAML files `values.yaml` file based on your application requirement. Also, add more YAML template files that can be used to deploy `pvc`, `secret`, `ingress` and more.
+
+### helm lint &lt;chart-project-dir&gt;
+The `helm lint` command can be used to validate your template YAML fiels. This will check whether your templates are well-formed or not.
+```
+PS C:\Kubernetes\Helm-charts> helm lint .\greetingsapp-chart\
+==> Linting .\greetingsapp-chart\
+[INFO] Chart.yaml: icon is recommended
+1 chart(s) linted, no failures    
+```
+### helm template &lt;chart-project-dir&gt;
+The `helm template` command renders your template files locally and outputs on the screen. You can verify the output yaml file is correct or not.
+```
+PS C:\Kubernetes\Helm-charts> helm template .\greetingsapp-chart\
+---
+# Source: greetingsapp-chart/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: release-name-greetingsapp-chart
+  labels:
+    chart: "greetingsapp-chart-0.1.0"
+    instance: release-name
+    managed-by:
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 8080
+    targetPort: 5000
+    protocol: TCP
+    name: greetingsapp-svc
+  selector:
+    app: greetingsapp-chart
+    instance: release-name
+---
+# Source: greetingsapp-chart/templates/deployment.yaml
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: release-name-greetingsapp-chart
+  labels:
+    chart: "greetingsapp-chart-0.1.0"
+    managed-by:
+    instance: release-name
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: greetingsapp-chart
+      instance: release-name
+  template:
+    metadata:
+      labels:
+        app: greetingsapp-chart
+        instance: release-name
+    spec:
+      containers:
+      - name: greetingsapp-chart
+        image: "sonusathyadas/sampleapp:latest"
+        imagePullPolicy:
+        ports:
+        - containerPort: 5000
+          protocol : TCP
+```
+### helm install 
+Use the `helm install` command to deploy your containerized applications using helm charts. You can optionally use a release name along with the command. It will help you to delete or modify the helm deployments using the release name.
+
+```
+PS C:\Kubernetes\Helm-charts> helm install --name demoapp ./greetingsapp-chart
+NAME:   demoapp
+LAST DEPLOYED: Thu Oct  3 11:39:27 2019
+NAMESPACE: default
+STATUS: DEPLOYED
+
+RESOURCES:
+==> v1/Pod(related)
+NAME                                         READY  STATUS             RESTARTS  AGE
+demoapp-greetingsapp-chart-74fcd7575c-7k87h  0/1    ContainerCreating  0         0s
+demoapp-greetingsapp-chart-74fcd7575c-dtgvl  1/1    Terminating        0         22h
+
+==> v1/Service
+NAME                        TYPE          CLUSTER-IP     EXTERNAL-IP  PORT(S)         AGE
+demoapp-greetingsapp-chart  LoadBalancer  10.99.193.204  <pending>    8080:32581/TCP  0s
+
+==> v1beta1/Deployment
+NAME                        READY  UP-TO-DATE  AVAILABLE  AGE
+demoapp-greetingsapp-chart  0/1    1           0          0s
+```
+
+### helm ls
+The `helm ls` command is used to list the helm released on your cluster. Use the `--all` option to view the deleted deployments also.
+
+```
+PS C:\Kubernetes\Helm-charts> helm ls --all
+NAME    REVISION        UPDATED                         STATUS          CHART                           APP VERSION   NAMESPACE           demoapp 1               Thu Oct  3 11:39:27 2019        DEPLOYED        greetingsapp-chart-0.1.0        1.0           default
+```
+
+### helm delete 
+The `helm delete` command is used to delete a helm deployment. You can optionally use `--purge` to delete the deployment permenantly.
+
+```
+PS C:\Kubernetes\Helm-charts> helm delete --purge demoapp
+release "demoapp" deleted 
+```
+
+### helm package
+The `helm package` command helps you to package your helm chart for distribution. This is the command to create versioned archive files of the chart. 
+```
+PS C:\Kubernetes\Helm-charts> cd .\greetingsapp-chart
+PS C:\Kubernetes\Helm-charts\greetingsapp-chart> helm package .\
+Successfully packaged chart and saved it to: C:\Kubernetes\Helm-charts\greetingsapp-chart\greetingsapp-chart-0.1.0.tgz    
+```
+This creates a versioned archive file that can be distributed manually or using a public or private repositories.
+
+### helm repo
+Now, you have packaged your helm chart that is ready for distribution. You can distribute it using a shared repository. You can push your helm charts into a `github` repository and share it. Remember, you need to create and `index.yaml` file inside the repo directory. Create a github repository for your helm chart and run the following command.
+```
+PS C:\Kubernetes\Helm-charts\greetingsapp-chart> helm repo index ./ --url https://github.com/sonusathyadas/greetingsapp-chart-repo
+```
+This generates the index.yaml file, which we should push to the repository along with the chart archives.
+
+Now, you can start creating your own helm charts for your own applications. 
