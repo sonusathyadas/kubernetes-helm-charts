@@ -238,17 +238,48 @@ release "demoapp" deleted
 ### helm package
 The `helm package` command helps you to package your helm chart for distribution. This is the command to create versioned archive files of the chart. 
 ```
-PS C:\Kubernetes\Helm-charts> cd .\greetingsapp-chart
-PS C:\Kubernetes\Helm-charts\greetingsapp-chart> helm package .\
-Successfully packaged chart and saved it to: C:\Kubernetes\Helm-charts\greetingsapp-chart\greetingsapp-chart-0.1.0.tgz    
+PS C:\Kubernetes\Helm-charts> helm package .\
+Successfully packaged chart and saved it to: C:\Kubernetes\Helm-charts\greetingsapp-chart-0.1.0.tgz    
 ```
 This creates a versioned archive file that can be distributed manually or using a public or private repositories.
 
 ### helm repo
 Now, you have packaged your helm chart that is ready for distribution. You can distribute it using a shared repository. You can push your helm charts into a `github` repository and share it. Remember, you need to create and `index.yaml` file inside the repo directory. Create a github repository for your helm chart and run the following command.
 ```
-PS C:\Kubernetes\Helm-charts\greetingsapp-chart> helm repo index ./ --url https://github.com/sonusathyadas/greetingsapp-chart-repo
+PS C:\Kubernetes\Helm-charts> helm repo index ./ --url https://github.com/sonusathyadas/kubernetes-helm-charts
 ```
 This generates the index.yaml file, which we should push to the repository along with the chart archives.
+```
+PS C:\Kubernetes\Helm-charts> git add .
+warning: LF will be replaced by CRLF in index.yaml.
+The file will have its original line endings in your working directory
+```
 
+```
+PS C:\Kubernetes\Helm-charts> git commit -m "Helm chart package added"
+[master fe6d9d2] Helm chart package added
+3 files changed, 160 insertions(+)
+create mode 100644 greetingsapp-chart-0.1.0.tgz
+create mode 100644 index.yaml                     
+```
+
+```
+PS C:\Kubernetes\Helm-charts> git push -u origin master
+Enumerating objects: 7, done.
+Counting objects: 100% (7/7), done.
+Delta compression using up to 8 threads
+Writing objects: 100% (5/5), 5.90 KiB | 1.97 MiB/s, done.
+Total 5 (delta 0), reused 0 (delta 0)
+To https://github.com/sonusathyadas/kubernetes-helm-charts.git
+    887e3b0..fe6d9d2  master -> master
+Branch 'master' set up to track remote branch 'master' from 'origin'. 
+```
+Add the repository by running the following command
+```
+helm repo add greetingsapp https://github.com/sonusathyadas/kubernetes-helm-charts
+```
+Install your package from the shared repository
+```
+helm install greetingsapp/greetingsapp-chart --name=mygreetings
+```
 Now, you can start creating your own helm charts for your own applications. 
